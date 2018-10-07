@@ -13,6 +13,9 @@ from PIL import Image
 from tile import genrateTile, removeTile
 
 def getImage(imageDir):
+    if not os.path.exists(imageDir):
+        os.mkdir(imageDir)
+        return []
     files = os.listdir(imageDir)
     images = []
     for file in files:
@@ -38,7 +41,7 @@ def getAverageRGB(image):
 
     def foo2():
         return np.average(img, axis=0)
-        
+
     print(timeit(stmt=foo1, number=100))
     print(timeit(stmt=foo2, number=100))
 
@@ -161,7 +164,7 @@ def main():
 
     print(f"[+] Saved output to {output_filename}")
     print('[+] Done.')
-    # removeTile(args.input_folder)
+    removeTile(args.input_folder)
 
 if __name__ == "__main__":
     main()
