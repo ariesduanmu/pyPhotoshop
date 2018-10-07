@@ -10,10 +10,9 @@ from PIL import Image
 
 def genrateMosaic(size, folder):
     for i in range(256):
-        r = random.randint(0, 255)
-        g = random.randint(0, 255)
-        b = random.randint(0, 255)
-        generateRandonPicture(size, ((max(0,r-100),r), (max(0,g-100),g), (max(0,b-100),b)), folder, "{:03d}.jpg".format(i))
+        r, g, b = random.choices(range(256),k=3)
+        color = ((max(0,r-100),r), (max(0,g-100),g), (max(0,b-100),b))
+        generateRandonPicture(size, color, folder, "{:03d}.jpg".format(i))
 
 def generateRandonPicture(size, color_range, folder, output):
     r_range, g_range, b_range = color_range
@@ -23,9 +22,9 @@ def generateRandonPicture(size, color_range, folder, output):
     img = Image.new("RGB", size)
     for i in range(size[0]):
         for j in range(size[1]):
-            img.paste((random.randint(r_min, r_max), random.randint(g_min, g_max), random.randint(b_min, b_max)), [i,j,i+1,j+1])
+            color = (random.randint(r_min, r_max), random.randint(g_min, g_max), random.randint(b_min, b_max))
+            img.paste(color, [i,j,i+1,j+1])
     img.save(os.path.abspath(os.path.join(folder, output)))
-
 
 def removeMosaic(folder):
     for file in os.listdir(folder):
@@ -62,16 +61,17 @@ def splitImage(image, size):
     return imgs
 
 def createImageGrid(images, dims):
+    padding = 10
     m, n = dims
     assert m*n == len(images)
     width = max([img.size[0] for img in images])
     height = max([img.size[1] for img in images])
-    grid_img = Image.new('RGB', (n*width+(n+1)*10, m*height+(m+1)*10))
+    grid_img = Image.new('RGB', (n*(width+padding)+padding, m*(height+padding)+padding))
 
     for index in range(len(images)):
         row = index//n
         col = index%n
-        grid_img.paste(images[index], (col*width+(col+1)*10, row*height+(row+1)*10))
+        grid_img.paste(images[index], (col*(width+padding)+padding, row*(height+padding)+padding))
     return grid_img
 
 def createPhotomosaic(target_image, input_images, grid_size, reuse_image=True):
@@ -120,14 +120,8 @@ def main():
     args = parse_arguments()
     target_image = Image.open(args.target_image)
     print('[*] Reading input folder...')
-    input_images = getImage(args.input_folder)
-    if input_images == []:
-      print(f'[-] No input images found in {args.input_folder}. Generating.')
-      print("[*] Gernating input images...")
-      genrateMosaic(args.grid_size, args.input_folder)
-      input_images = getImage(args.input_folder)
-      # sys.exit(1)
-    random.shuffle(input_images)
+    
+    
     grid_size = (args.grid_size[0], args.grid_size[1])
 
     output_filename = args.output_file
@@ -142,16 +136,22 @@ def main():
           print('[-] Grid size less than number of images')
           sys.exit(1)
 
-    # resizing input
-    if resize_input:
-        print('[*] Resizing images...')
-        # for given grid size, compute max dims w,h of tiles
-        dims = (target_image.size[0]//grid_size[1], 
-                target_image.size[1]//grid_size[0])
-        print(f"[*] Max tile dims: {dims}")
-    # resize
-    for img in input_images:
-        img.thumbnail(dims)
+    dims = (target_image.size[0]//grid_size[1], 
+            target_image.size[1]//grid_size[0])
+    print(f"[*] Max tile dims: {dims}")
+
+    input_images = getImage(args.input_folder)
+    if input_images == []:
+        print(f'[-] No input images found in {args.input_folder}. Generating.')
+        print("[*] Gernating input images...")
+        genrateMosaic(dims, args.input_folder)
+        input_images = getImage(args.input_folder)
+    else:
+        if resize_input:
+            print('[*] Resizing images...')
+            for img in input_images:
+                img.thumbnail(dims)
+    random.shuffle(input_images)
 
     mosaic_image = createPhotomosaic(target_image, input_images, grid_size,
                                      reuse_images)
