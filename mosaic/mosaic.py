@@ -4,6 +4,8 @@ import sys
 import random
 import argparse
 import numpy as np
+
+from scipy.spatial import KDTree
 from PIL import Image
 
 def genrateMosaic(size, folder):
@@ -29,11 +31,6 @@ def removeMosaic(folder):
     for file in os.listdir(folder):
         path = os.path.abspath(os.path.join(folder, file))
         os.remove(path)
-
-def RGBDistance(color_a, color_b):
-    r1, g1, b1 = color_a
-    r2, g2, b2 = color_b
-    return (r1-r2) ** 2 + (g1-g2) ** 2 + (b1-b2) ** 2
 
 def getImage(imageDir):
     files = os.listdir(imageDir)
@@ -64,18 +61,6 @@ def splitImage(image, size):
             imgs.append(image.crop((i*w, j*h, (i+1)*w, (j+1)*h)))
     return imgs
 
-def getBestMatchIndex(input_avg, avgs):
-    avg = input_avg
-    min_index = 0
-    min_dist = float("inf")
-    for index in range(len(avgs)):
-        val = avgs[index]
-        distance = RGBDistance(val, avg)
-        if distance < min_dist:
-            min_dist = distance
-            min_index = index
-    return min_index
-
 def createImageGrid(images, dims):
     m, n = dims
     assert m*n == len(images)
@@ -102,9 +87,11 @@ def createPhotomosaic(target_image, input_images, grid_size, reuse_image=True):
     for img in input_images:
         avgs.append(getAverageRGB(img))
 
+    avgs = np.array(avgs)
+    tree = KDTree(avgs)
     for img in target_images:
         avg = getAverageRGB(img)
-        match_index = getBestMatchIndex(avg, avgs)
+        match_index = tree.query(avg)[1]
         output_images.append(input_images[match_index])
 
         if count > 0 and batch_size > 10 and count % batch_size == 0:
@@ -144,9 +131,7 @@ def main():
     grid_size = (args.grid_size[0], args.grid_size[1])
 
     output_filename = args.output_file
-
     reuse_images = True
-
     resize_input = True
 
     print('[*] Starting photomosaic creation...')
@@ -169,7 +154,7 @@ def main():
         img.thumbnail(dims)
 
     mosaic_image = createPhotomosaic(target_image, input_images, grid_size,
-                                   reuse_images)
+                                     reuse_images)
 
     mosaic_image.save(output_filename, 'PNG')
 
