@@ -5,31 +5,12 @@ import random
 import argparse
 import numpy as np
 
+from timeit import timeit
+from scipy.cluster.vq import kmeans
 from scipy.spatial import KDTree
 from PIL import Image
 
-def genrateMosaic(size, folder):
-    for i in range(256):
-        r, g, b = random.choices(range(256),k=3)
-        color = ((max(0,r-100),r), (max(0,g-100),g), (max(0,b-100),b))
-        generateRandonPicture(size, color, folder, "{:03d}.jpg".format(i))
-
-def generateRandonPicture(size, color_range, folder, output):
-    r_range, g_range, b_range = color_range
-    r_min, r_max = r_range
-    g_min, g_max = g_range
-    b_min, b_max = b_range
-    img = Image.new("RGB", size)
-    for i in range(size[0]):
-        for j in range(size[1]):
-            color = (random.randint(r_min, r_max), random.randint(g_min, g_max), random.randint(b_min, b_max))
-            img.paste(color, [i,j,i+1,j+1])
-    img.save(os.path.abspath(os.path.join(folder, output)))
-
-def removeMosaic(folder):
-    for file in os.listdir(folder):
-        path = os.path.abspath(os.path.join(folder, file))
-        os.remove(path)
+from tile import genrateTile, removeTile
 
 def getImage(imageDir):
     files = os.listdir(imageDir)
@@ -47,8 +28,28 @@ def getImage(imageDir):
 
 def getAverageRGB(image):
     img = np.array(image)
+    
     w, h, d = img.shape
-    return tuple(np.average(img.reshape(w*h, d), axis=0))
+    img = img.reshape(w*h, d)
+
+    '''
+    def foo1():
+        return kmeans(img.astype(float), 1)[0][0]
+
+    def foo2():
+        return np.average(img, axis=0)
+        
+    print(timeit(stmt=foo1, number=100))
+    print(timeit(stmt=foo2, number=100))
+
+    ---
+    output:
+    1.9172285870008636
+    0.035429636016488075
+
+    kmeans spend way more time...
+    '''
+    return tuple(np.average(img, axis=0))
 
 def splitImage(image, size):
     W, H, *args = image.size
@@ -144,7 +145,7 @@ def main():
     if input_images == []:
         print(f'[-] No input images found in {args.input_folder}. Generating.')
         print("[*] Gernating input images...")
-        genrateMosaic(dims, args.input_folder)
+        genrateTile(dims, args.input_folder)
         input_images = getImage(args.input_folder)
     else:
         if resize_input:
@@ -160,7 +161,7 @@ def main():
 
     print(f"[+] Saved output to {output_filename}")
     print('[+] Done.')
-    removeMosaic(args.input_folder)
+    # removeTile(args.input_folder)
 
 if __name__ == "__main__":
     main()
