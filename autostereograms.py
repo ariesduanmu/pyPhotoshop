@@ -47,6 +47,7 @@ def createAutostereograms(depth, tile, radio):
     cols, rows = sImage.size
     for j in range(rows):
         for i in range(cols):
+            #明暗交界处的变化最为明显,所以矢量图的效果更好
             xshift = pixD[i, j]//radio
             xpos = i - tile.size[0] + xshift
             if xpos > 0 and xpos < cols:
