@@ -20,8 +20,6 @@ def createTiledImage(tile, dims):
     W, H = dims
     w, h = tile.size
 
-    print(W, H, w, h)
-
     cols = W//w + 1
     rows = H//h + 1
 
@@ -30,7 +28,7 @@ def createTiledImage(tile, dims):
             image.paste(tile,(j*w, i*h))
     return image
 
-def createAutostereograms(depth, tile):
+def createAutostereograms(depth, tile, radio):
     W, H = depth.size
     if tile is not None:
         tile = Image.open(os.path.abspath(args.tile))
@@ -39,8 +37,6 @@ def createAutostereograms(depth, tile):
             tile.thumbnail(min((W//10, (H*w)//(10*h)), ((W*h)//(10*w), H//10)))
     else:
         size = min((W//10, H//10), (100, 100))
-        print(size)
-        print( min(*size)*10)
         tile = createRandomTile(size, min(*size)*3)
     image = createTiledImage(tile, depth.size)
     sImage = image.copy()
@@ -51,7 +47,7 @@ def createAutostereograms(depth, tile):
     cols, rows = sImage.size
     for j in range(rows):
         for i in range(cols):
-            xshift = pixD[i, j]//10
+            xshift = pixD[i, j]//radio
             xpos = i - tile.size[0] + xshift
             if xpos > 0 and xpos < cols:
                 pixS[i, j] = pixS[xpos, j]
@@ -61,6 +57,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Autosterograms...")
 
     parser.add_argument('-d', '--depth', required=True, help="depth image path")
+    parser.add_argument('-r', '--ratio', type=int, default=10, required=False, help="tile image")
     parser.add_argument('-t', '--tile', required=False, help="tile image")
     parser.add_argument('-o', '--out', default="auto.png", required=False, help="")
 
@@ -81,6 +78,6 @@ if __name__ == "__main__":
     depth_path = os.path.abspath(args.depth)
     depth = Image.open(depth_path).convert('L')
 
-    autoImage = createAutostereograms(depth, args.tile)
+    autoImage = createAutostereograms(depth, args.tile, args.ratio)
     autoImage.save(args.out)
 
