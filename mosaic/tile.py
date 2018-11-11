@@ -9,9 +9,9 @@ def genrateTile(size, folder):
     for i in range(256):
         r, g, b = random.choices(range(256),k=3)
         color = ((max(0,r-100),r), (max(0,g-100),g), (max(0,b-100),b))
-        generateRandonPicture(size, color, folder, "{:03d}.jpg".format(i))
+        generateRandomPicture(size, color, folder, "{:03d}.jpg".format(i))
 
-def generateRandonPicture(size, color_range, folder, output):
+def generateRandomPicture(size, color_range, folder, output):
     img = Image.new("RGB", size)
     for color, i, j in randomColor(size, color_range):
         img.paste(color, [i,j,i+1,j+1])
