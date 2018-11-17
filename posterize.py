@@ -4,7 +4,7 @@ from pprint import pprint
 from PIL import Image
 from scipy.cluster.vq import kmeans, vq
 
-'''modify color by light(gray degree), can be used as heat map
+'''modify color depends on light(gray) degree, can be used as heat map
 '''
 
 def sepearte_by_lights(gray_data, number=3):
@@ -16,7 +16,7 @@ def sepearte_by_lights(gray_data, number=3):
     return idx
 
 def posterize(image_path, modification, number, extra_colors, output):
-    img = Image.open("test.jpg")
+    img = Image.open(image_path)
     gray = img.convert("L")
     data = np.asarray(img, dtype="int32")
     w, h, k = data.shape
