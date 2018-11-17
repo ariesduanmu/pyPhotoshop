@@ -17,6 +17,8 @@ def sepearte_by_lights(gray_data, number=3):
     return idx
 
 def simple_blur(image_path, output, level=1):
+    '''average of the 4 pixels around it(up, down, left, right)
+    '''
     img = Image.open(image_path)
     data = np.asarray(img, dtype="int32")
     w, h, _ = data.shape

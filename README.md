@@ -17,3 +17,7 @@ Replace color in image measured by Euclidean distance
 ### posterize
 
 Modify color depends on light(gray) degree
+
+### blur
+
+Blur image
